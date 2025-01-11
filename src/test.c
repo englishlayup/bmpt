@@ -1,7 +1,6 @@
 #include "lib.c"
 #include <assert.h>
 #include <stdio.h>
-#include <string.h>
 
 // Very small test helpers
 int failed = 0;
