@@ -52,12 +52,25 @@ void free_bitmap(struct Bitmap *bitmap) {
   bitmap->pixels = NULL;
 }
 
-void print_bytes(const color_t *bytes, size_t size) {
-  printf("Bytes: ");
-  for (size_t i = 0; i < size; ++i) {
-    printf("0x%02X ", bytes[i]); // Print each byte in hexadecimal format
+void print_bytes(const struct Bitmap bitmap) {
+  int height = bitmap.height;
+  int width = bitmap.width;
+  color_t *pixels = bitmap.pixels;
+
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      printf("0x%02X ", pixels[i * width + j]);
+    }
+    printf("\n");
   }
-  printf("\n");
+}
+
+void bmp_info(const struct Bitmap bitmap) {
+  puts("----- Bitmap info -----");
+  int height = bitmap.height;
+  int width = bitmap.width;
+  printf("Dimensions: %d x %d\n", height, width);
+  print_bytes(bitmap);
 }
 
 void set_pixel(struct Bitmap *bitmap, int row, int col, color_t color) {
@@ -88,37 +101,51 @@ void print_bitmap(const struct Bitmap bitmap) {
   }
 }
 
-void simple_black_square() {
+struct Bitmap simple_black_square() {
   struct Bitmap bitmap = init_bitmap(10, 10);
   for (int i = 0; i < bitmap.height; i++) {
     for (int j = 0; j < bitmap.width; j++) {
       set_pixel(&bitmap, i, j, 0);
     }
   }
-  print_bitmap(bitmap);
-  free_bitmap(&bitmap);
+  return bitmap;
 }
 
 color_t get_pixel(int red, int green, int blue) {
   return (red << 16) + (green << 8) + blue;
 }
 
-void rotate_right_90(struct Bitmap *bitmap) {
-  color_t tmp[bitmap->width * bitmap->height] = {};
-  for (int i = 0; i < bitmap->height; i++) {
-    for (int j = 0; j < bitmap->width; j++) {
-      tmp[(bitmap->width - j) * bitmap->width + i] =
-          bitmap->pixels[i * bitmap->width + j];
+struct Bitmap test_img() {
+  int height = 3;
+  int width = 4;
+  struct Bitmap bitmap = init_bitmap(width, height);
+  for (int i = 0; i < height; i++) {
+    for (int j = 0; j < width; j++) {
+      set_pixel(&bitmap, i, j, i * width + j);
     }
   }
-  memcpy(bitmap->pixels, tmp, bitmap->width * bitmap->height);
-
-  int width = bitmap->width;
-  bitmap->width = bitmap->height;
-  bitmap->height = width;
+  return bitmap;
 }
 
-void gradient() {
+void rotate_right_90(struct Bitmap *bitmap) {
+  const int AREA = bitmap->width * bitmap->height;
+  color_t tmp[AREA] = {};
+  for (int i = 0; i < bitmap->height; i++) {
+    for (int j = 0; j < bitmap->width; j++) {
+      tmp[i * bitmap->width + (bitmap->width - j)] =
+          bitmap->pixels[i * bitmap->width + j];
+      // tmp[570] = bitmap->pixels[10];
+      // printf("%d\n", tmp[i * bitmap->width + j]);
+    }
+  }
+  memcpy(bitmap->pixels, tmp, AREA);
+
+  // int width = bitmap->width;
+  // bitmap->width = bitmap->height;
+  // bitmap->height = width;
+}
+
+struct Bitmap gradient() {
   struct Bitmap bitmap = init_bitmap(51, 51);
   for (int i = 0; i < bitmap.height; i++) {
     for (int j = 0; j < bitmap.width; j++) {
@@ -126,8 +153,7 @@ void gradient() {
       set_pixel(&bitmap, i, j, color);
     }
   }
-  print_bitmap(bitmap);
-  free_bitmap(&bitmap);
+  return bitmap;
 }
 
 void read_bitmap(struct Bitmap *bitmap, const char *filename) {
