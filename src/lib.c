@@ -132,17 +132,14 @@ void rotate_right_90(struct Bitmap *bitmap) {
   color_t tmp[AREA] = {};
   for (int i = 0; i < bitmap->height; i++) {
     for (int j = 0; j < bitmap->width; j++) {
-      tmp[i * bitmap->width + (bitmap->width - j)] =
+      tmp[j * bitmap->height + (bitmap->height - 1 - i)] =
           bitmap->pixels[i * bitmap->width + j];
-      // tmp[570] = bitmap->pixels[10];
-      // printf("%d\n", tmp[i * bitmap->width + j]);
     }
   }
-  memcpy(bitmap->pixels, tmp, AREA);
-
-  // int width = bitmap->width;
-  // bitmap->width = bitmap->height;
-  // bitmap->height = width;
+  memcpy(bitmap->pixels, tmp, AREA*sizeof(color_t));
+  int width = bitmap->width;
+  bitmap->width = bitmap->height;
+  bitmap->height = width;
 }
 
 struct Bitmap gradient() {
