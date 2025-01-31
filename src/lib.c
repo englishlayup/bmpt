@@ -80,7 +80,8 @@ void set_pixel(struct Bitmap *bitmap, int row, int col, color_t color) {
   bitmap->pixels[row * bitmap->width + col] = color;
 }
 
-int cprint(char buffer[], int buflen, uint8_t red, uint8_t green, uint8_t blue) {
+int cprint(char buffer[], int buflen, uint8_t red, uint8_t green,
+           uint8_t blue) {
   return snprintf(buffer, buflen, "\033[48;2;%d;%d;%dm \033[0m", red, green,
                   blue);
 }
@@ -195,7 +196,7 @@ void write_bitmap(struct Bitmap bitmap, const char *filename) {
   fclose(file);
 }
 
-color_t get_pixel(int red, int green, int blue) {
+color_t get_color(int red, int green, int blue) {
   return (red << 16) + (green << 8) + blue;
 }
 
@@ -237,7 +238,7 @@ struct Bitmap poland_flag() {
   }
   for (int i = height / 2; i < height; i++) {
     for (int j = 0; j < width; j++) {
-      color_t poland_red = get_pixel(0xDC, 0x14, 0x3C);
+      color_t poland_red = get_color(0xDC, 0x14, 0x3C);
       set_pixel(&bitmap, i, j, poland_red);
     }
   }
@@ -255,7 +256,7 @@ struct Bitmap vietnam_flag() {
   }
   for (int i = height / 2; i < height; i++) {
     for (int j = 0; j < width; j++) {
-      color_t poland_red = get_pixel(0xDC, 0x14, 0x3C);
+      color_t poland_red = get_color(0xDC, 0x14, 0x3C);
       set_pixel(&bitmap, i, j, poland_red);
     }
   }
@@ -266,7 +267,7 @@ struct Bitmap gradient() {
   struct Bitmap bitmap = init_bitmap(51, 51);
   for (int i = 0; i < bitmap.height; i++) {
     for (int j = 0; j < bitmap.width; j++) {
-      color_t color = get_pixel(j * 5, 0, i * 5);
+      color_t color = get_color(j * 5, 0, i * 5);
       set_pixel(&bitmap, i, j, color);
     }
   }
