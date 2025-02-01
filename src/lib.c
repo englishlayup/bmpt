@@ -200,6 +200,25 @@ color_t get_color(int red, int green, int blue) {
   return (red << 16) + (green << 8) + blue;
 }
 
+void fill(struct Bitmap *bitmap, size_t x1, size_t y1, size_t x2, size_t y2,
+          color_t color) {
+  if (x1 > x2) {
+    size_t tmp = x1;
+    x1 = x2;
+    x2 = tmp;
+  }
+  if (y1 > y2) {
+    size_t tmp = y1;
+    y1 = y2;
+    y2 = tmp;
+  }
+  for (size_t i = 0; i < x2 - x1; i++) {
+    for (size_t j = 0; j < y2 - y1; j++) {
+      set_pixel(bitmap, x1 + i, y1 + j, color);
+    }
+  }
+}
+
 void rotate_right_90(struct Bitmap *bitmap) {
   const int AREA = bitmap->width * bitmap->height;
   color_t tmp[AREA] = {};
@@ -231,17 +250,18 @@ struct Bitmap poland_flag() {
   int width = 30;
   int height = 20;
   struct Bitmap bitmap = init_bitmap(width, height);
-  for (int i = 0; i < height / 2; i++) {
-    for (int j = 0; j < width; j++) {
-      set_pixel(&bitmap, i, j, 0xFFFFFF);
-    }
-  }
-  for (int i = height / 2; i < height; i++) {
-    for (int j = 0; j < width; j++) {
-      color_t poland_red = get_color(0xDC, 0x14, 0x3C);
-      set_pixel(&bitmap, i, j, poland_red);
-    }
-  }
+  fill(&bitmap, 0, 0, height / 2, width, 0xFFFFFF);
+  fill(&bitmap, height / 2, 0, height, width, 0xDC143C);
+  return bitmap;
+}
+
+struct Bitmap ireland_flag() {
+  int width = 30;
+  int height = 20;
+  struct Bitmap bitmap = init_bitmap(width, height);
+  fill(&bitmap, 0, 0, height, width / 3, 0x169B62);
+  fill(&bitmap, 0, width / 3, height, 2 * width / 3, 0xFFFFFF);
+  fill(&bitmap, 0, 2 * width / 3, height, 3 * width / 3, 0xFF883E);
   return bitmap;
 }
 
