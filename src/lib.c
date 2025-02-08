@@ -69,7 +69,7 @@ void bmp_info(const struct Bitmap *bitmap) {
   puts("----- Bitmap info -----");
   int height = bitmap->height;
   int width = bitmap->width;
-  printf("Dimensions: %d x %d\n", height, width);
+  printf("Dimensions: %d x %d\n", width, height);
   print_bytes(bitmap);
 }
 
@@ -108,20 +108,39 @@ void read_bitmap(struct Bitmap *bitmap, const char *filename) {
     fprintf(stderr, "Error opening file: %s", filename);
     return;
   }
-  BITMAPFILEHEADER bmfh;
-  fread(&bmfh, 1, 14, file);
-  assert(bmfh.bfType == 0x4D42);
+  WORD bfType, bfReserved1, bfReserved2, biPlanes, biBitCount;
+  DWORD bfSize, bfOffBits, biSize, biWidth, biHeight, biCompression,
+      biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrUsed, biClrImportant;
+  fread(&bfType, 1, 2, file);
+  fread(&bfSize, 1, 4, file);
+  fread(&bfReserved1, 1, 2, file);
+  fread(&bfReserved2, 1, 2, file);
+  fread(&bfOffBits, 1, 4, file);
+  fread(&biSize, 1, 4, file);
+  fread(&biWidth, 1, 4, file);
+  fread(&biHeight, 1, 4, file);
+  fread(&biPlanes, 1, 2, file);
+  fread(&biBitCount, 1, 2, file);
+  fread(&biCompression, 1, 4, file);
+  fread(&biSizeImage, 1, 4, file);
+  fread(&biXPelsPerMeter, 1, 4, file);
+  fread(&biYPelsPerMeter, 1, 4, file);
+  fread(&biClrUsed, 1, 4, file);
+  fread(&biClrImportant, 1, 4, file);
 
-  BITMAPINFOHEADER bmih = {};
-  fread(&bmih, 1, 40, file);
-  assert(bmih.biBitCount == 0x18);
+  assert(bfType == 0x4D42);
+  assert(biXPelsPerMeter == 0x0);
+  assert(biYPelsPerMeter == 0x0);
+  assert(biClrUsed == 0x0);
+  assert(biClrImportant == 0x0);
+  assert(biBitCount == 0x18);
 
-  bitmap->width = bmih.biWidth;
-  bitmap->height = bmih.biHeight;
+  bitmap->width = biWidth;
+  bitmap->height = biHeight;
   bitmap->pixels =
       (color_t *)malloc(bitmap->width * bitmap->height * sizeof(color_t));
-  long row_len = 4 * ((bmih.biWidth * bmih.biBitCount + 31) / 32);
-  long padding_bytes = row_len - (bmih.biWidth * bmih.biBitCount) / 8;
+  long row_len = 4 * ((biWidth * biBitCount + 31) / 32);
+  long padding_bytes = row_len - (biWidth * biBitCount) / 8;
 
   for (int i = bitmap->height - 1; i >= 0; i--) {
     for (int j = 0; j < bitmap->width; j++) {
@@ -178,7 +197,12 @@ void write_pixel_data(struct Bitmap bitmap, FILE *file) {
   for (int i = bitmap.height - 1; i >= 0; i--) {
     for (size_t j = 0; j < bitmap.width; j++) {
       color_t pixel = bitmap.pixels[i * bitmap.width + j];
-      fwrite(&pixel, 3, 1, file);
+      uint8_t red = (pixel & 0xFF0000) >> 16;
+      uint8_t green = (pixel & 0xFF00) >> 8;
+      uint8_t blue = (pixel & 0xFF);
+      fwrite(&blue, 1, 1, file);
+      fwrite(&green, 1, 1, file);
+      fwrite(&red, 1, 1, file);
     }
     fwrite(&zero, padding, 1, file);
   }
@@ -234,12 +258,25 @@ void rotate_right_90(struct Bitmap *bitmap) {
   bitmap->height = width;
 }
 
-struct Bitmap test_img() {
-  int height = 3;
-  int width = 4;
+void monochrome(const struct Bitmap *bitmap, struct Bitmap *red_channel,
+                struct Bitmap *green_channel, struct Bitmap *blue_channel) {
+  *red_channel = init_bitmap(bitmap->width, bitmap->height);
+  *green_channel = init_bitmap(bitmap->width, bitmap->height);
+  *blue_channel = init_bitmap(bitmap->width, bitmap->height);
+  for (int i = 0; i < bitmap->height; i++) {
+    for (int j = 0; j < bitmap->width; j++) {
+      color_t color = bitmap->pixels[i * bitmap->width + j];
+      red_channel->pixels[i * bitmap->width + j] = color & 0xFF0000;
+      green_channel->pixels[i * bitmap->width + j] = color & 0xFF00;
+      blue_channel->pixels[i * bitmap->width + j] = color & 0xFF;
+    }
+  }
+}
+
+struct Bitmap test_img(size_t width, size_t height) {
   struct Bitmap bitmap = init_bitmap(width, height);
-  for (int i = 0; i < height; i++) {
-    for (int j = 0; j < width; j++) {
+  for (size_t i = 0; i < height; i++) {
+    for (size_t j = 0; j < width; j++) {
       set_pixel(&bitmap, i, j, i * width + j);
     }
   }
