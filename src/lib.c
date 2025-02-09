@@ -151,9 +151,13 @@ void read_bitmap(struct Bitmap *bitmap, const char *filename) {
   fclose(file);
 }
 
-int calc_img_size(int width, int height) {
-  int padding = 4 - (width * 3 % 4);
-  return (width * 3 + padding) * height;
+uint calc_row_length(uint width) {
+    // Doesn't cancel because of integer division
+    return ((3 * width + 3) / 4) * 4;
+}
+
+unsigned int calc_img_size(int width, int height) {
+  return calc_row_length(width) * height;
 }
 
 void write_file_header(int width, int height, FILE *file) {
@@ -170,7 +174,7 @@ void write_file_header(int width, int height, FILE *file) {
 
 void write_info_header(int width, int height, FILE *file) {
   uint32_t biSize = 0x28;
-  uint16_t biPlanes = 0x2;
+  uint16_t biPlanes = 0x1;
   uint16_t biBitCount = 0x18;
   uint32_t biCompression = 0x0;
   uint32_t biSizeImage = calc_img_size(width, height);
@@ -192,19 +196,20 @@ void write_info_header(int width, int height, FILE *file) {
 }
 
 void write_pixel_data(struct Bitmap bitmap, FILE *file) {
-  int padding = 4 - (bitmap.width * 3 % 4);
-  int zero = 0;
+  int padding = calc_row_length(bitmap.width) - 3 * bitmap.width;
   for (int i = bitmap.height - 1; i >= 0; i--) {
-    for (size_t j = 0; j < bitmap.width; j++) {
-      color_t pixel = bitmap.pixels[i * bitmap.width + j];
-      uint8_t red = (pixel & 0xFF0000) >> 16;
-      uint8_t green = (pixel & 0xFF00) >> 8;
-      uint8_t blue = (pixel & 0xFF);
+    for (int j = 0; j < bitmap.width; j++) {
+      color_t color = bitmap.pixels[i * bitmap.width + j];
+      uint8_t red = (color & 0xFF0000) >> 16;
+      uint8_t green = (color & 0xFF00) >> 8;
+      uint8_t blue = (color & 0xFF);
       fwrite(&blue, 1, 1, file);
       fwrite(&green, 1, 1, file);
       fwrite(&red, 1, 1, file);
     }
-    fwrite(&zero, padding, 1, file);
+    for (int k = 0; k < padding; k++) {
+        fputc(0, file);
+    }
   }
 }
 
