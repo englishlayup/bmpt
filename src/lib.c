@@ -152,8 +152,8 @@ void read_bitmap(struct Bitmap *bitmap, const char *filename) {
 }
 
 uint calc_row_length(uint width) {
-    // Doesn't cancel because of integer division
-    return ((3 * width + 3) / 4) * 4;
+  // Doesn't cancel because of integer division
+  return ((3 * width + 3) / 4) * 4;
 }
 
 unsigned int calc_img_size(int width, int height) {
@@ -208,7 +208,7 @@ void write_pixel_data(struct Bitmap bitmap, FILE *file) {
       fwrite(&red, 1, 1, file);
     }
     for (int k = 0; k < padding; k++) {
-        fputc(0, file);
+      fputc(0, file);
     }
   }
 }
