@@ -1,89 +1,57 @@
 #include "lib.c"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+void cmd_square(int argc, char **argv);
+void cmd_gradient(int argc, char **argv);
+void cmd_poland(int argc, char **argv);
+void cmd_ireland(int argc, char **argv);
+
+typedef struct {
+  char *name;
+  void (*func)(int, char **);
+  char *desc;
+} command_t;
+
+command_t commands[] = {
+    {"square", cmd_square, "A simple black square of 10x10"},
+    {"gradient", cmd_gradient,
+     "A square gradient from black in the top left to pure red in the top "
+     "right and pure blue in the bottom left"},
+    {"ireland_flag", cmd_ireland, "Ireland flag"},
+    {"poland_flag", cmd_poland, "Poland flag"},
+    {NULL, NULL, NULL},
+};
+
+void print_usage(const char *program_name) {
+  printf("Usage: %s <command> [options]\n\n", program_name);
+  printf("Available commands:\n");
+
+  for (command_t *cmd = commands; cmd->name != NULL; cmd++) {
+    printf("  %-10s %s\n", cmd->name, cmd->desc);
+  }
+}
 
 int main(int argc, char *argv[]) {
-  struct Bitmap bitmap;
-  int cont = 1;
-  int opt;
-  if (argc == 2) {
-    read_bitmap(&bitmap, argv[1]);
-    print_bitmap(&bitmap);
-  } else {
-    puts("Select an option: ");
-    puts("1. A simple black square of 10x10");
-    puts("2. A square gradient from black in the top left to pure red in the "
-         "top "
-         "right and pure blue in the bottom left");
-    puts("3. Poland flag");
-    puts("4. Ireland flag");
-    printf("Selection: ");
-    scanf("%d", &opt);
-    switch (opt) {
-    case 1:
-      bitmap = simple_black_square();
-      print_bitmap(&bitmap);
-      break;
-    case 2:
-      bitmap = gradient();
-      print_bitmap(&bitmap);
-      break;
-    case 3:
-      bitmap = poland_flag();
-      print_bitmap(&bitmap);
-      break;
-    case 4:
-      bitmap = ireland_flag();
-      print_bitmap(&bitmap);
-      break;
-    default:
-      fputs("Invalid selection.", stderr);
-      exit(1);
-    };
+  if (argc < 2) {
+    print_usage(argv[0]);
+    return 1;
   }
 
-  while (cont) {
-    puts("Select an option: ");
-    puts("1. Save image to file");
-    puts("2. Print pixels as binary data");
-    puts("3. Rotate image right 90 degrees");
-    puts("4. Monochrome bitmaps");
-    puts("Otherwise, exit program");
-    printf("Selection: ");
-    scanf("%d", &opt);
-    switch (opt) {
-    case 1: {
-      char filename[1024];
-      printf("Enter filename: ");
-      scanf("%s", filename);
-      write_bitmap(bitmap, filename);
-      break;
-    }
-    case 2:
-      bmp_info(&bitmap);
-      break;
-    case 3:
-      rotate_right_90(&bitmap);
-      print_bitmap(&bitmap);
-      break;
-    case 4: {
-      struct Bitmap red, green, blue;
-      monochrome(&bitmap, &red, &green, &blue);
-      puts("");
-      print_bitmap(&red);
-      puts("");
-      print_bitmap(&green);
-      puts("");
-      print_bitmap(&blue);
-      puts("");
-      break;
-    }
-    default:
-      cont = 0;
+  for (command_t *cmd = commands; cmd->name != NULL; cmd++) {
+    if (strcmp(argv[1], cmd->name) == 0) {
+      cmd->func(argc - 1, &argv[1]);
+      return 0;
     }
   }
 
-  free_bitmap(&bitmap);
-
+  printf("Unknown command: %s\n", argv[1]);
+  print_usage(argv[0]);
   return 0;
 }
+
+void cmd_square(int argc, char **argv) { simple_black_square(); }
+void cmd_gradient(int argc, char **argv) { gradient(); }
+void cmd_poland(int argc, char **argv) { poland_flag(); }
+void cmd_ireland(int argc, char **argv) { ireland_flag(); }
