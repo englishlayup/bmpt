@@ -11,11 +11,11 @@ typedef uint16_t WORD;
 typedef uint32_t DWORD;
 typedef long LONG;
 
-struct Bitmap {
+typedef struct {
   unsigned int width;
   unsigned int height;
   color_t *pixels;
-};
+} Bitmap;
 
 typedef struct tagBITMAPFILEHEADER // bmfh
 {
@@ -41,18 +41,18 @@ typedef struct tagBITMAPINFOHEADER // bmih
   DWORD biClrImportant;  // number of important colors
 } BITMAPINFOHEADER, *PBITMAPINFOHEADER;
 
-struct Bitmap init_bitmap(int width, int height) {
+Bitmap init_bitmap(int width, int height) {
   color_t *pixels = (color_t *)malloc(width * height * sizeof(color_t));
-  struct Bitmap bitmap = {.width = width, .height = height, .pixels = pixels};
+  Bitmap bitmap = {.width = width, .height = height, .pixels = pixels};
   return bitmap;
 }
 
-void free_bitmap(struct Bitmap *bitmap) {
+void free_bitmap(Bitmap *bitmap) {
   free(bitmap->pixels);
   bitmap->pixels = NULL;
 }
 
-void print_bytes(const struct Bitmap *bitmap) {
+void print_bytes(const Bitmap *bitmap) {
   int height = bitmap->height;
   int width = bitmap->width;
   color_t *pixels = bitmap->pixels;
@@ -65,7 +65,7 @@ void print_bytes(const struct Bitmap *bitmap) {
   }
 }
 
-void bmp_info(const struct Bitmap *bitmap) {
+void bmp_info(const Bitmap *bitmap) {
   puts("----- Bitmap info -----");
   int height = bitmap->height;
   int width = bitmap->width;
@@ -73,7 +73,7 @@ void bmp_info(const struct Bitmap *bitmap) {
   print_bytes(bitmap);
 }
 
-void set_pixel(struct Bitmap *bitmap, int row, int col, color_t color) {
+void set_pixel(Bitmap *bitmap, int row, int col, color_t color) {
   if (row >= bitmap->height || col >= bitmap->width) {
     return;
   }
@@ -86,7 +86,7 @@ int cprint(char buffer[], int buflen, uint8_t red, uint8_t green,
                   blue);
 }
 
-void print_bitmap(const struct Bitmap *bitmap) {
+void print_bitmap(const Bitmap *bitmap) {
   for (int i = 0; i < bitmap->height; i++) {
     for (int j = 0; j < bitmap->width; j++) {
       color_t pixel = bitmap->pixels[i * bitmap->width + j];
@@ -102,7 +102,7 @@ void print_bitmap(const struct Bitmap *bitmap) {
   }
 }
 
-void read_bitmap(struct Bitmap *bitmap, const char *filename) {
+void read_bitmap(Bitmap *bitmap, const char *filename) {
   FILE *file = fopen(filename, "rb");
   if (file == NULL) {
     fprintf(stderr, "Error opening file: %s", filename);
@@ -195,7 +195,7 @@ void write_info_header(int width, int height, FILE *file) {
   fwrite(&biClrImportant, 4, 1, file);
 }
 
-void write_pixel_data(struct Bitmap bitmap, FILE *file) {
+void write_pixel_data(Bitmap bitmap, FILE *file) {
   int padding = calc_row_length(bitmap.width) - 3 * bitmap.width;
   for (int i = bitmap.height - 1; i >= 0; i--) {
     for (int j = 0; j < bitmap.width; j++) {
@@ -213,7 +213,7 @@ void write_pixel_data(struct Bitmap bitmap, FILE *file) {
   }
 }
 
-void write_bitmap(struct Bitmap bitmap, const char *filename) {
+void write_bitmap(Bitmap bitmap, const char *filename) {
   FILE *file = fopen(filename, "wb");
   if (file == NULL) {
     fprintf(stderr, "Error opening file: %s", filename);
@@ -229,7 +229,7 @@ color_t get_color(int red, int green, int blue) {
   return (red << 16) + (green << 8) + blue;
 }
 
-void fill(struct Bitmap *bitmap, size_t x1, size_t y1, size_t x2, size_t y2,
+void fill(Bitmap *bitmap, size_t x1, size_t y1, size_t x2, size_t y2,
           color_t color) {
   if (x1 > x2) {
     size_t tmp = x1;
@@ -248,7 +248,7 @@ void fill(struct Bitmap *bitmap, size_t x1, size_t y1, size_t x2, size_t y2,
   }
 }
 
-void rotate_right_90(struct Bitmap *bitmap) {
+void rotate_right_90(Bitmap *bitmap) {
   const int AREA = bitmap->width * bitmap->height;
   color_t tmp[AREA] = {};
   for (int i = 0; i < bitmap->height; i++) {
@@ -263,8 +263,8 @@ void rotate_right_90(struct Bitmap *bitmap) {
   bitmap->height = width;
 }
 
-void monochrome(const struct Bitmap *bitmap, struct Bitmap *red_channel,
-                struct Bitmap *green_channel, struct Bitmap *blue_channel) {
+void monochrome(const Bitmap *bitmap, Bitmap *red_channel,
+                Bitmap *green_channel, Bitmap *blue_channel) {
   *red_channel = init_bitmap(bitmap->width, bitmap->height);
   *green_channel = init_bitmap(bitmap->width, bitmap->height);
   *blue_channel = init_bitmap(bitmap->width, bitmap->height);
@@ -278,8 +278,8 @@ void monochrome(const struct Bitmap *bitmap, struct Bitmap *red_channel,
   }
 }
 
-struct Bitmap test_img(size_t width, size_t height) {
-  struct Bitmap bitmap = init_bitmap(width, height);
+Bitmap test_img(size_t width, size_t height) {
+  Bitmap bitmap = init_bitmap(width, height);
   for (size_t i = 0; i < height; i++) {
     for (size_t j = 0; j < width; j++) {
       set_pixel(&bitmap, i, j, i * width + j);
@@ -288,29 +288,29 @@ struct Bitmap test_img(size_t width, size_t height) {
   return bitmap;
 }
 
-struct Bitmap poland_flag() {
+Bitmap poland_flag() {
   int width = 30;
   int height = 20;
-  struct Bitmap bitmap = init_bitmap(width, height);
+  Bitmap bitmap = init_bitmap(width, height);
   fill(&bitmap, 0, 0, height / 2, width, 0xFFFFFF);
   fill(&bitmap, height / 2, 0, height, width, 0xDC143C);
   return bitmap;
 }
 
-struct Bitmap ireland_flag() {
+Bitmap ireland_flag() {
   int width = 30;
   int height = 20;
-  struct Bitmap bitmap = init_bitmap(width, height);
+  Bitmap bitmap = init_bitmap(width, height);
   fill(&bitmap, 0, 0, height, width / 3, 0x169B62);
   fill(&bitmap, 0, width / 3, height, 2 * width / 3, 0xFFFFFF);
   fill(&bitmap, 0, 2 * width / 3, height, 3 * width / 3, 0xFF883E);
   return bitmap;
 }
 
-struct Bitmap vietnam_flag() {
+Bitmap vietnam_flag() {
   int width = 30;
   int height = 20;
-  struct Bitmap bitmap = init_bitmap(width, height);
+  Bitmap bitmap = init_bitmap(width, height);
   for (int i = 0; i < height / 2; i++) {
     for (int j = 0; j < width; j++) {
       set_pixel(&bitmap, i, j, 0xFFFFFF);
@@ -325,8 +325,8 @@ struct Bitmap vietnam_flag() {
   return bitmap;
 }
 
-struct Bitmap gradient() {
-  struct Bitmap bitmap = init_bitmap(51, 51);
+Bitmap gradient() {
+  Bitmap bitmap = init_bitmap(51, 51);
   for (int i = 0; i < bitmap.height; i++) {
     for (int j = 0; j < bitmap.width; j++) {
       color_t color = get_color(j * 5, 0, i * 5);
@@ -336,8 +336,8 @@ struct Bitmap gradient() {
   return bitmap;
 }
 
-struct Bitmap simple_black_square() {
-  struct Bitmap bitmap = init_bitmap(10, 10);
+Bitmap simple_black_square() {
+  Bitmap bitmap = init_bitmap(10, 10);
   for (int i = 0; i < bitmap.height; i++) {
     for (int j = 0; j < bitmap.width; j++) {
       set_pixel(&bitmap, i, j, 0);
